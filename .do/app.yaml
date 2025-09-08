@@ -10,6 +10,8 @@ services:
   environment_slug: php
   instance_count: 1
   instance_size_slug: basic-xxs
+  engines:
+    php: 8.2
   routes:
   - path: /
   health_check:

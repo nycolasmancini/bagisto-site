@@ -34,6 +34,39 @@ function executeCommand($command, $description, $timeout = 300) {
     return $output;
 }
 
+// Check PHP environment and extensions
+echo "Checking PHP environment...\n";
+echo "PHP Version: " . phpversion() . "\n";
+
+// Check critical extensions that Bagisto needs
+$requiredExtensions = ['curl', 'intl', 'mbstring', 'pdo', 'pdo_mysql'];
+$missingExtensions = [];
+
+foreach ($requiredExtensions as $ext) {
+    if (!extension_loaded($ext)) {
+        $missingExtensions[] = $ext;
+        echo "WARNING: Extension $ext is not loaded\n";
+    } else {
+        echo "✓ Extension $ext is loaded\n";
+    }
+}
+
+// Check optional but commonly available extensions
+$optionalExtensions = ['tokenizer', 'calendar', 'openssl'];
+foreach ($optionalExtensions as $ext) {
+    if (extension_loaded($ext)) {
+        echo "✓ Optional extension $ext is available\n";
+    } else {
+        echo "ⓘ Optional extension $ext is not available (this is OK)\n";
+    }
+}
+
+if (!empty($missingExtensions)) {
+    echo "ERROR: Critical PHP extensions are missing: " . implode(', ', $missingExtensions) . "\n";
+    echo "The application may not work correctly without these extensions.\n";
+    // Don't exit - let's try to continue and see if DigitalOcean provides them at runtime
+}
+
 // Prepare environment for composer install
 echo "Preparing environment...\n";
 if (!file_exists('.env')) {
@@ -62,7 +95,7 @@ if (file_exists('bootstrap/cache/services.php')) {
 
 // Install dependencies - using production optimized settings
 echo "Installing dependencies...\n";
-executeCommand("composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress", "Composer install", 600);
+executeCommand("composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress --ignore-platform-reqs", "Composer install", 600);
 
 // Generate autoload files
 executeCommand("composer dump-autoload --optimize --no-dev", "Optimize autoload", 120);
