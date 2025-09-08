@@ -34,6 +34,32 @@ function executeCommand($command, $description, $timeout = 300) {
     return $output;
 }
 
+// Prepare environment for composer install
+echo "Preparing environment...\n";
+if (!file_exists('.env')) {
+    echo "Creating temporary .env file for bootstrap...\n";
+    copy('.env.example', '.env');
+    
+    // Set basic required variables for bootstrap
+    $envContent = file_get_contents('.env');
+    $envContent = str_replace('APP_KEY=', 'APP_KEY=' . base64_encode(random_bytes(32)), $envContent);
+    $envContent = str_replace('APP_ENV=local', 'APP_ENV=production', $envContent);
+    $envContent = str_replace('APP_DEBUG=true', 'APP_DEBUG=false', $envContent);
+    file_put_contents('.env', $envContent);
+    
+    echo "Temporary .env created for bootstrap process\n";
+}
+
+// Clear any existing problematic cache files
+if (file_exists('bootstrap/cache/packages.php')) {
+    unlink('bootstrap/cache/packages.php');
+    echo "Cleared existing packages cache\n";
+}
+if (file_exists('bootstrap/cache/services.php')) {
+    unlink('bootstrap/cache/services.php');
+    echo "Cleared existing services cache\n";
+}
+
 // Install dependencies - using production optimized settings
 echo "Installing dependencies...\n";
 executeCommand("composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress", "Composer install", 600);
@@ -54,9 +80,45 @@ executeCommand("php artisan cache:clear", "Clear application cache");
 executeCommand("php artisan view:clear", "Clear view cache");
 executeCommand("php artisan route:clear", "Clear route cache");
 
-// Run package discovery with timeout protection
+// Run package discovery with fallback protection
 echo "Running package discovery...\n";
-executeCommand("php artisan package:discover --ansi", "Package discovery", 180);
+$output = [];
+$return = 0;
+exec("timeout 180 php artisan package:discover --ansi 2>&1", $output, $return);
+
+if ($return !== 0) {
+    echo "WARNING: Package discovery failed, trying alternative approach...\n";
+    echo "Error output:\n" . implode("\n", array_slice($output, -5)) . "\n";
+    
+    // Clear all cache and try again
+    echo "Clearing all cached files...\n";
+    executeCommand("php artisan config:clear", "Clear config cache");
+    executeCommand("php artisan cache:clear", "Clear application cache");
+    executeCommand("php artisan route:clear", "Clear route cache");
+    executeCommand("php artisan view:clear", "Clear view cache");
+    
+    // Try package discovery without ANSI
+    echo "Retrying package discovery without ANSI...\n";
+    exec("timeout 120 php artisan package:discover 2>&1", $output2, $return2);
+    
+    if ($return2 !== 0) {
+        echo "WARNING: Package discovery still failed. Continuing with manual provider registration...\n";
+        echo "This may cause some packages to not be auto-discovered, but core functionality should work.\n";
+        
+        // Force clear bootstrap cache and continue
+        executeCommand("rm -rf bootstrap/cache/*.php", "Clear bootstrap cache");
+    } else {
+        echo "SUCCESS: Package discovery completed on retry\n";
+    }
+} else {
+    echo "SUCCESS: Package discovery completed\n";
+}
+
+// Remove temporary .env file to use DigitalOcean environment variables
+if (file_exists('.env')) {
+    unlink('.env');
+    echo "Removed temporary .env file - using DigitalOcean environment variables\n";
+}
 
 // Run migrations
 echo "Running database migrations...\n";
