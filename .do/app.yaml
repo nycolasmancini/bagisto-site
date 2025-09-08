@@ -5,7 +5,8 @@ services:
   github:
     repo: nycolasmancini/bagisto-site
     branch: main
-  run_command: php -f .do/deploy.php && php artisan serve --host=0.0.0.0 --port=8080
+  build_command: php -f .do/deploy.php
+  run_command: php artisan serve --host=0.0.0.0 --port=8080
   environment_slug: php
   instance_count: 1
   instance_size_slug: basic-xxs
