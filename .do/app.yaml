@@ -35,6 +35,12 @@ services:
     value: en
   - key: APP_CURRENCY
     value: BRL
+  - key: LOG_CHANNEL
+    value: stack
+  - key: LOG_LEVEL
+    value: error
+  - key: BCRYPT_ROUNDS
+    value: "12"
   - key: DB_CONNECTION
     value: pgsql
   - key: DB_HOST
@@ -47,9 +53,27 @@ services:
     value: doadmin
   - key: DB_PASSWORD
     value: ${DB_PASSWORD}
-  - key: CACHE_DRIVER
+  - key: CACHE_STORE
     value: database
   - key: SESSION_DRIVER
     value: database
+  - key: SESSION_LIFETIME
+    value: "120"
   - key: QUEUE_CONNECTION
     value: database
+  - key: FILESYSTEM_DISK
+    value: public
+  - key: BROADCAST_CONNECTION
+    value: log
+  - key: RESPONSE_CACHE_ENABLED
+    value: "false"
+  - key: MAIL_MAILER
+    value: log
+  - key: MAIL_FROM_ADDRESS
+    value: shop@pmcell.com
+  - key: MAIL_FROM_NAME
+    value: PMCell
+  - key: ADMIN_MAIL_ADDRESS
+    value: admin@pmcell.com
+  - key: ADMIN_MAIL_NAME
+    value: Admin
