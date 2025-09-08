@@ -1,0 +1,54 @@
+name: bagisto-pmcell
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: nycolasmancini/bagisto-site
+    branch: main
+  run_command: php -f .do/deploy.php && php artisan serve --host=0.0.0.0 --port=8080
+  environment_slug: php
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  routes:
+  - path: /
+  health_check:
+    http_path: /
+  envs:
+  - key: APP_NAME
+    value: Bagisto
+  - key: APP_ENV
+    value: production
+  - key: APP_KEY
+    value: base64:Q3xRGSYw6S0/e0+5gj1taWOgbaNToqALbPRon9KQ8ag=
+  - key: APP_DEBUG
+    value: "false"
+  - key: APP_URL
+    value: ${APP_URL}
+  - key: APP_ADMIN_URL
+    value: admin
+  - key: APP_TIMEZONE
+    value: America/Sao_Paulo
+  - key: APP_LOCALE
+    value: pt_BR
+  - key: APP_FALLBACK_LOCALE
+    value: en
+  - key: APP_CURRENCY
+    value: BRL
+  - key: DB_CONNECTION
+    value: pgsql
+  - key: DB_HOST
+    value: db-postgresql-nyc3-21488-do-user-25610932-0.d.db.ondigitalocean.com
+  - key: DB_PORT
+    value: "25060"
+  - key: DB_DATABASE
+    value: defaultdb
+  - key: DB_USERNAME
+    value: doadmin
+  - key: DB_PASSWORD
+    value: ${DB_PASSWORD}
+  - key: CACHE_DRIVER
+    value: database
+  - key: SESSION_DRIVER
+    value: database
+  - key: QUEUE_CONNECTION
+    value: database
